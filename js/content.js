@@ -1,4 +1,5 @@
 if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
+    platform = "Showtime";
     var EXT_NAME_CONTENT_SCRIPT_LOADED = true;
 
     var extension = {};
@@ -31,13 +32,20 @@ if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
         return data;
     }
 
-    let getShowLinks = function() {
+    const getHuluLinks = function() {
         return [...document.getElementsByTagName("a")].filter(x => x.id.includes("title"));
     };
 
+    const getShowtimeLinks = function() {
+        return [...document.getElementsByTagName("span")].filter(x => x.className == "name");
+    };
+
     let getTitles = function() {
-        const shows = getShowLinks().map(x => x.text);
-        return shows;
+        if (platform == "Hulu") {
+            return getHuluLinks().map(x => x.text);
+        } else if (platform == "Showtime") {
+            return getShowtimeLinks().map(x => x.innerText);
+        }
     };
 
     const APIKEY = "b365e774";
@@ -46,7 +54,7 @@ if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
         let imdbRating = "";
 
         let query =
-            "http://www.omdbapi.com/?s=" + title.replace(" ", "+") + "&" + "apikey=" + APIKEY;
+            "https://www.omdbapi.com/?s=" + title.replace(" ", "+") + "&" + "apikey=" + APIKEY;
 
         let result = await fetchAsync(query);
 
@@ -56,7 +64,7 @@ if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
 
         let imdbID = result["Search"][0]["imdbID"];
 
-        query = "http://www.omdbapi.com/?i=" + imdbID + "&" + "apikey=" + APIKEY;
+        query = "https://www.omdbapi.com/?i=" + imdbID + "&" + "apikey=" + APIKEY;
         result = await fetchAsync(query);
 
         if (result["Response"] === "True") {
@@ -75,11 +83,17 @@ if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
     };
 
     let createRatingDiv = function(imdbRating) {
-        imdbRating.style = "position:relative;right:-80%;top:-2.5em";
+        let topValue = "";
+        if (platform == "Hulu") {
+            topValue = "-2.5";
+        } else if (platform == "Showtime") {
+            topValue = "0";
+        }
+        imdbRating.style = "position:relative;right:-80%;top:" + topValue + "em";
 
         const imdbIcon = document.createElement("i");
         imdbIcon.className = "fab fa-imdb";
-        imdbIcon.style = "margin:0.2em;position:relative;right:-80%;top:-2.5em;";
+        imdbIcon.style = "margin:0.2em;position:relative;right:-80%;top:" + topValue + "em;";
 
         const ratingDiv = document.createElement("div");
         ratingDiv.className = "rating-div";
@@ -101,15 +115,20 @@ if (typeof EXT_NAME_CONTENT_SCRIPT_LOADED == "undefined") {
     let execute = async function() {
         addFontAwesome();
         const titles = getTitles();
+        console.log(titles);
 
         for (let i = 0; i < titles.length; ++i) {
             try {
                 const rating = await getImdbRating(titles[i]);
+                console.log("got rating");
                 const imdbRating = document.createElement("span");
                 imdbRating.innerHTML = rating;
                 const ratingDiv = createRatingDiv(imdbRating);
-                getShowLinks()[i].parentElement.appendChild(ratingDiv);
-                return;
+                if (platform == "Hulu") {
+                    getHuluLinks()[i].parentElement.appendChild(ratingDiv);
+                } else if (platform == "Showtime") {
+                    getShowtimeLinks()[i].parentElement.appendChild(ratingDiv);
+                }
             } catch (exception) {
                 console.error(exception);
             }
