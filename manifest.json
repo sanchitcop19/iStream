@@ -13,7 +13,14 @@
         "128": "images/icon.png"
     },
 
-    "permissions": ["tabs", "storage", "unlimitedStorage", "cookies", "http://*/", "https://*/"],
+    "permissions": [
+        "tabs",
+        "storage",
+        "unlimitedStorage",
+        "cookies",
+        "https://www.hulu.com/",
+        "https://www.showtime.com/"
+    ],
     "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'",
     "web_accessible_resources": [
         "css/*.css",
@@ -38,7 +45,7 @@
             "19": "images/icon.png",
             "38": "images/icon.png"
         },
-        "default_title": "[NAME]",
+        "default_title": "iStream",
         "default_popup": "html/options.html"
     },
     "options_page": "html/options.html",
